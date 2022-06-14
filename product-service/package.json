@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "type": "module",
+    "serverless-import-config-plugin": "^0.1.3"
+  }
+  
+}
