@@ -26,3 +26,5 @@ module.exports.getProductsById = async (event) => {
           },
       };
 }
+
+console.log("Please check my work after wednesday, because I didn't access for my comp))");
