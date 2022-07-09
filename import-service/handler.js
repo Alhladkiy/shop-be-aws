@@ -57,7 +57,7 @@ const importProductsFile = async (event) => {
 
 const importFileParser = async (event) => {
   const s3 = new AWS.S3({ region: 'eu-central-1' });
-
+  const res = [];
   try {
     for (const record of event.Records) {
       const key = record.s3.object.key;
@@ -66,24 +66,25 @@ const importFileParser = async (event) => {
         Bucket: BUCKET,
         Key: key,
       };
+      const s3Stream = s3.getObject(params).createReadStream(key);
       await new Promise((resolve, reject) => {
-        const s3Stream = s3.getObject(params).createReadStream();
         s3Stream
           .pipe(csvParser())
           .on('data', (data) => {
-            console.log(data);
+            res.push(data)
           })
           .on('error', (err) => {
             reject(err);
           })
-        .on('end', async () => {
-          console.log(`Copying was successful`);
+          .on('end', async () => {
+            console.log(res)
 
           await s3.copyObject({
             Bucket: BUCKET,
             CopySource: `${BUCKET}/${key}`,
             Key: key.replace('uploaded', 'parsed_file')
           }).promise();
+          console.log(`Copying was successful`);
 
           await s3.deleteObject({
             Bucket: BUCKET,
@@ -91,7 +92,7 @@ const importFileParser = async (event) => {
           }).promise();
           console.log('file delete')
 
-          resolve();
+          resolve(res);
         });
       });
       return {
@@ -100,7 +101,7 @@ const importFileParser = async (event) => {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Credentials": true,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(res),
       };
     }
   } catch (error) {
