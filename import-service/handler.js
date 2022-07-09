@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const csvParser = require('csv-parser');
+const { Readable } = require('stream');
 
 const BUCKET = 'uploaded-alhladkiy';
 
@@ -58,43 +59,45 @@ const importProductsFile = async (event) => {
 const importFileParser = async (event) => {
   const s3 = new AWS.S3({ region: 'eu-central-1' });
   const res = [];
+
   try {
     for (const record of event.Records) {
       const key = record.s3.object.key;
 
-      const params = {
+      const param = {
         Bucket: BUCKET,
         Key: key,
-      };
-      const s3Stream = s3.getObject(params).createReadStream(key);
+      }
+      const s3Stream = s3.getObject(param).createReadStream();           
       await new Promise((resolve, reject) => {
-        s3Stream
+          s3Stream
           .pipe(csvParser())
-          .on('data', (data) => {
-            res.push(data)
+          .on('data', (data) => res.push(data))
+          .on('error', (error) => {
+              reject(error);
           })
-          .on('error', (err) => {
-            reject(err);
-          })
-          .on('end', async () => {
+          .on('end', async () => { 
             console.log(res)
 
-          await s3.copyObject({
-            Bucket: BUCKET,
-            CopySource: `${BUCKET}/${key}`,
-            Key: key.replace('uploaded', 'parsed_file')
-          }).promise();
-          console.log(`Copying was successful`);
+            await s3.copyObject({
+              Bucket: BUCKET,
+              CopySource: `${BUCKET}/${key}`,
+              Key: key.replace('uploaded', 'parsed_file')
+            }).promise();
+            console.log(`Copying was successful`);
+  
+            await s3.deleteObject({
+              Bucket: BUCKET,
+              Key: key
+            }).promise();
+            console.log('file delete')
 
-          await s3.deleteObject({
-            Bucket: BUCKET,
-            Key: key
-          }).promise();
-          console.log('file delete')
-
-          resolve(res);
-        });
+              resolve( async()=> {    
+                  console.log('resolve!!!!')
+              });
+          });   
       });
+
       return {
         statusCode: 200,
         headers: {
