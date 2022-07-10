@@ -113,7 +113,6 @@ functions:
             Fn::GetAtt:
               - SQSQueue
               - Arn
-          # arn: arn:aws:sqs:region:eu-central-1:catalogItemsQueue 
 
    
 #    The following are a few example events you can configure
