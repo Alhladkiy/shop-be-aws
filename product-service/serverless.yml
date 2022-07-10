@@ -22,7 +22,7 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   stage: dev
   region: eu-central-1
 
@@ -45,8 +45,7 @@ provider:
 #                - "/*"
 
 # you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+
 
 # you can add packaging information here
 #package:
@@ -58,7 +57,8 @@ provider:
 
 functions:
   getProductsList:
-    handler: handler.getProductsList
+    # handler: handler.getProductsList
+    handler: utils/getProductsList.getProductsList
     events:
       - http:
           path: /products
@@ -66,7 +66,7 @@ functions:
           cors: true
 
   getProductsById:
-    handler: handler.getProductsById
+    handler: utils/getProductsById.getProductsById
     events:
       - http:
           path: /products/{productId}
