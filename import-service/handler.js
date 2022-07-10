@@ -122,7 +122,15 @@ const importFileParser = async (event) => {
   }
 }
 
-  module.exports = {
-    importProductsFile,
-    importFileParser
-  }
+const catalogBatchProcess = async (event) => {
+  console.log(111111111, event)
+  console.log(222222222, event.Records)
+
+}
+
+
+module.exports = {
+  importProductsFile,
+  importFileParser,
+  catalogBatchProcess
+}

@@ -26,16 +26,27 @@ provider:
   stage: dev
   region: eu-central-1
 
-  iamRoleStatements:
-    - Effect: "Allow"
-      Action: "s3:ListBucket"
-      Resource:
-        - "arn:aws:s3:::uploaded-alhladkiy"
-    - Effect: "Allow"
-      Action:
-        - "s3:*"
-      Resource:
-        - "arn:aws:s3:::uploaded-alhladkiy/*"
+  environment:
+    SQS_URL:
+      Ref: SQSQueue
+
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: catalogItemsQueue
+
+iamRoleStatements:
+  - Effect: "Allow"
+    Action: "s3:ListBucket"
+    Resource:
+      - "arn:aws:s3:::uploaded-alhladkiy"
+  - Effect: "Allow"
+    Action:
+      - "s3:*"
+    Resource:
+      - "arn:aws:s3:::uploaded-alhladkiy/*"
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1
@@ -82,6 +93,7 @@ functions:
             parameters:
               querystrings:
                 name: true
+
   importFileParser:
     handler: handler.importFileParser
     events:
@@ -91,6 +103,17 @@ functions:
           rules:
             - prefix: uploaded/
           existing: true
+
+  catalogBatchProcess:
+    handler: handler.catalogBatchProcess
+    events:
+      - sqs:
+          batchSize: 5
+          arn: 
+            Fn::GetAtt:
+              - SQSQueue
+              - Arn
+          # arn: arn:aws:sqs:region:eu-central-1:catalogItemsQueue 
 
    
 #    The following are a few example events you can configure
