@@ -30,6 +30,28 @@ provider:
     SQS_URL:
       Ref: SQSQueue
 
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+      Resource:
+        - "arn:aws:s3:::uploaded-alhladkiy"
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource:
+        - "arn:aws:s3:::uploaded-alhladkiy/*"
+    - Effect: Allow
+      Action:
+        - "sqs:*"
+      Resource:
+        Fn::GetAtt: [ SQSQueue, Arn ]
+    - Effect: "Allow"
+      Action:
+        - "sns:*"
+      Resource: 
+        Ref: SNSTopic
+
 resources:
   Resources:
     SQSQueue:
@@ -37,16 +59,18 @@ resources:
       Properties:
         QueueName: catalogItemsQueue
 
-iamRoleStatements:
-  - Effect: "Allow"
-    Action: "s3:ListBucket"
-    Resource:
-      - "arn:aws:s3:::uploaded-alhladkiy"
-  - Effect: "Allow"
-    Action:
-      - "s3:*"
-    Resource:
-      - "arn:aws:s3:::uploaded-alhladkiy/*"
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: createProductTopic
+    SNSSubscription: 
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: Alhladkiy@gmail.com
+        Protocol: email
+        TopicArn:
+          Ref: SNSTopic 
+
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1

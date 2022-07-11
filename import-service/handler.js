@@ -2,7 +2,6 @@ const AWS = require('aws-sdk');
 const csvParser = require('csv-parser');
 
 const BUCKET = 'uploaded-alhladkiy';
-
 const sqs = new AWS.SQS();
 
 const importProductsFile = async (event) => {
@@ -57,14 +56,6 @@ const importProductsFile = async (event) => {
   }
 }
 
-
-const sendMessage = async (data) => {
-  await sqs.sendMessage({
-      QueueUrl: process.env.SQS_URL,
-      MessageBody: data
-  }, () => console.log('message sent:', data)).promise();
-};
-
 const importFileParser = async (event) => {
   const s3 = new AWS.S3({ region: 'eu-central-1' });
   const res = [];
@@ -81,7 +72,18 @@ const importFileParser = async (event) => {
       await new Promise((resolve, reject) => {
           s3Stream
           .pipe(csvParser())
-          .on('data', (data) => res.push(data))
+          .on('data', (data) => 
+          sqs.sendMessage({
+            QueueUrl: process.env.SQS_URL,
+            MessageBody: data
+          }, () => console.log('message sent:', data)).promise())
+          callback(null, {
+            statusCode: 200,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Credentials": true,
+            },
+          })
           .on('error', (error) => {
               reject(error);
           })
@@ -91,6 +93,8 @@ const importFileParser = async (event) => {
               
             })
             await sendMessage(data);
+
+            await 
 
             await s3.copyObject({
               Bucket: BUCKET,
@@ -136,10 +140,8 @@ const importFileParser = async (event) => {
 }
 
 const catalogBatchProcess = async (event) => {
-  await event.Records.forEach((record) => {
-    const { body } = record.Records
-    console.log('message', body);
-  });
+  
+  console.log(event)
 
   return {
       statusCode: 200,
